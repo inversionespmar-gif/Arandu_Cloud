@@ -1,4 +1,4 @@
-const socket = io('http://localhost:3002', { path: '/ws-trading' });
+const socket = io({ path: '/ws-trading' });
 
 // UI Elements
 const currentPriceEl = document.getElementById('currentPrice');
