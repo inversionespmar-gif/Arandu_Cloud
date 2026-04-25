@@ -216,7 +216,7 @@
 // ============================================================
 // SOCKET CONNECTION
 // ============================================================
-const socket = io('http://localhost:3002', { path: '/ws-trading', transports: ['websocket', 'polling'] });
+const socket = io({ path: '/ws-trading', transports: ['websocket', 'polling'] });
 
 // ============================================================
 // CHART INITIALIZATION
