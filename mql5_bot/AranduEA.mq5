@@ -18,6 +18,10 @@ input double   RR_Ratio    = 2.0;
 
 int timer_interval = 2; // El bot buscará nuevas señales cada 2 segundos
 
+input ulong    MagicNumber    = 123456;
+input bool     UseTrailing    = true;
+input double   TrailingPct    = 0.02; // Iniciar Trailing al 2% de ganancia del TP
+
 // Inicialización
 int OnInit() {
     Print("Arandu Cloud EA iniciado. Escuchando base de datos Supabase...");
@@ -32,6 +36,85 @@ void OnDeinit(const int reason) {
 // Loop Principal
 void OnTimer() {
     CheckForSignals();
+    if(UseTrailing) ManageTrailingStop();
+}
+
+// ==========================================
+// LÓGICA DE TRAILING STOP
+// ==========================================
+void ManageTrailingStop() {
+    string symbol = Symbol();
+    double point = SymbolInfoDouble(symbol, SYMBOL_POINT);
+    double spread = SymbolInfoInteger(symbol, SYMBOL_SPREAD) * point;
+    double tickSize = SymbolInfoDouble(symbol, SYMBOL_TRADE_TICK_SIZE);
+    double tickValue = SymbolInfoDouble(symbol, SYMBOL_TRADE_TICK_VALUE);
+    
+    for(int i = PositionsTotal() - 1; i >= 0; i--) {
+        string pos_symbol = PositionGetSymbol(i);
+        if(pos_symbol != symbol) continue;
+        
+        ulong magic = PositionGetInteger(POSITION_MAGIC);
+        if(magic != MagicNumber) continue;
+        
+        ulong ticket = PositionGetInteger(POSITION_TICKET);
+        double openPrice = PositionGetDouble(POSITION_PRICE_OPEN);
+        double currentSL = PositionGetDouble(POSITION_SL);
+        double currentTP = PositionGetDouble(POSITION_TP);
+        double currentPrice = PositionGetDouble(POSITION_PRICE_CURRENT);
+        double volume = PositionGetDouble(POSITION_VOLUME);
+        long type = PositionGetInteger(POSITION_TYPE);
+        
+        // Extraer Costos: Comisión y Swap (normalmente son valores negativos)
+        double commission = MathAbs(PositionGetDouble(POSITION_COMMISSION));
+        double swap = MathAbs(PositionGetDouble(POSITION_SWAP));
+        // Multiplicamos comisión x2 por si el broker cobra la salida también
+        double totalCosts = (commission * 2.0) + swap; 
+        
+        // Convertir el costo en dinero a distancia en precio
+        double costPerTick = tickValue * volume;
+        double costDistance = 0;
+        if(costPerTick > 0) {
+            costDistance = (totalCosts / costPerTick) * tickSize;
+        }
+        
+        // Beneficio total necesario asumiendo que TP fue seteado
+        double totalProfitDistance = MathAbs(currentTP - openPrice);
+        if(totalProfitDistance <= 0) continue;
+        
+        // Distancia actual a favor
+        double currentProfitDistance = (type == POSITION_TYPE_BUY) ? (currentPrice - openPrice) : (openPrice - currentPrice);
+        
+        // Si ya recorrió el X% del TP (ej. 2%)
+        if(currentProfitDistance >= (totalProfitDistance * TrailingPct)) {
+            // Calcular el nuevo nivel: Break Even + Spread + Costos (Comisión/Swap) + La mitad de la ganancia extra
+            double targetSL = 0;
+            double protectionDistance = spread + costDistance;
+            
+            if(type == POSITION_TYPE_BUY) {
+                targetSL = openPrice + protectionDistance + (currentProfitDistance * 0.5); 
+                if(targetSL > currentSL && targetSL < currentPrice) {
+                    MqlTradeRequest request; MqlTradeResult result;
+                    ZeroMemory(request); ZeroMemory(result);
+                    request.action = TRADE_ACTION_SLTP;
+                    request.position = ticket;
+                    request.sl = targetSL;
+                    request.tp = currentTP;
+                    OrderSend(request, result);
+                }
+            } else if(type == POSITION_TYPE_SELL) {
+                targetSL = openPrice - protectionDistance - (currentProfitDistance * 0.5);
+                if((currentSL == 0 || targetSL < currentSL) && targetSL > currentPrice) {
+                    MqlTradeRequest request; MqlTradeResult result;
+                    ZeroMemory(request); ZeroMemory(result);
+                    request.action = TRADE_ACTION_SLTP;
+                    request.position = ticket;
+                    request.sl = targetSL;
+                    request.tp = currentTP;
+                    OrderSend(request, result);
+                }
+            }
+        }
+    }
 }
 
 // ==========================================
@@ -104,8 +187,78 @@ void ProcessSignal(string json) {
     
     Print("Ejecutando orden: ", direction);
     
-    // Aquí iría la lógica nativa OrderSend() de MQL5 para colocar la operación
-    // usando Symbol(), RiskPercent, SL_Pips, etc.
+    // ==========================================
+    // EJECUCIÓN NATIVA MT5: RIESGO Y LOTAJE
+    // ==========================================
+    string symbol = Symbol();
+    double minLot = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MIN);
+    double maxLot = SymbolInfoDouble(symbol, SYMBOL_VOLUME_MAX);
+    double lotStep = SymbolInfoDouble(symbol, SYMBOL_VOLUME_STEP);
+    double point = SymbolInfoDouble(symbol, SYMBOL_POINT);
+    double bid = SymbolInfoDouble(symbol, SYMBOL_BID);
+    double ask = SymbolInfoDouble(symbol, SYMBOL_ASK);
+    
+    // Cálculo de Balance y Riesgo Monetario
+    double balance = AccountInfoDouble(ACCOUNT_BALANCE);
+    double riskMoney = balance * (RiskPercent / 100.0);
+    
+    // En criptos, un pip a veces es 1 dólar, y a veces 0.01 dependiendo del broker.
+    // Usaremos un aproximado estándar para BTC o dejamos que el SL_Pips venga fijo.
+    double slDistance = SL_Pips * point;
+    if(slDistance <= 0) slDistance = 50 * point; // Fallback
+    
+    // El valor monetario de 1 lote por la distancia del SL
+    double tickSize = SymbolInfoDouble(symbol, SYMBOL_TRADE_TICK_SIZE);
+    double tickValue = SymbolInfoDouble(symbol, SYMBOL_TRADE_TICK_VALUE);
+    double moneyPerLot = (slDistance / tickSize) * tickValue;
+    
+    double calculatedLot = minLot;
+    if (moneyPerLot > 0) {
+        calculatedLot = riskMoney / moneyPerLot;
+    }
+    
+    // Redondear el lote al step permitido por el broker
+    calculatedLot = MathRound(calculatedLot / lotStep) * lotStep;
+    if (calculatedLot < minLot) calculatedLot = minLot;
+    if (calculatedLot > maxLot) calculatedLot = maxLot;
+    
+    // Preparamos la estructura de la orden
+    MqlTradeRequest request;
+    MqlTradeResult  result;
+    ZeroMemory(request);
+    ZeroMemory(result);
+    
+    request.action = TRADE_ACTION_DEAL;
+    request.magic  = MagicNumber; // Asignar el Magic Number
+    request.symbol = symbol;
+    request.volume = calculatedLot;
+    request.type_filling = ORDER_FILLING_IOC; 
+    
+    double slPrice = 0, tpPrice = 0;
+    
+    if (direction == "BUY") {
+        request.type = ORDER_TYPE_BUY;
+        request.price = ask;
+        slPrice = request.price - slDistance;
+        tpPrice = request.price + (slDistance * RR_Ratio);
+    } 
+    else if (direction == "SELL") {
+        request.type = ORDER_TYPE_SELL;
+        request.price = bid;
+        slPrice = request.price + slDistance;
+        tpPrice = request.price - (slDistance * RR_Ratio);
+    }
+    
+    request.sl = slPrice;
+    request.tp = tpPrice;
+    
+    Print("Enviando orden ", direction, " | Lote: ", calculatedLot, " | Riesgo: $", riskMoney);
+    
+    if(!OrderSend(request, result)) {
+        Print("Error ejecutando orden MT5. Código: ", result.retcode);
+    } else {
+        Print("Orden ejecutada con éxito. Ticket: ", result.deal);
+    }
     
     // 3. Actualizar estado a 'EXECUTED' en Supabase para no repetir la señal
     MarkSignalAsExecuted(idStr);

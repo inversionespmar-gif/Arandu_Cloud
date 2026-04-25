@@ -17,6 +17,23 @@ const io     = socketIo(server, {
 });
 
 // Servir la carpeta public (el Dashboard UI)
+// --- MIDDLEWARE DE SEGURIDAD (CANDADO) ---
+const ADMIN_USER = process.env.ADMIN_USER || 'admin';
+const ADMIN_PASS = process.env.ADMIN_PASS || 'arandu123';
+
+app.use((req, res, next) => {
+  const b64auth = (req.headers.authorization || '').split(' ')[1] || '';
+  const [login, password] = Buffer.from(b64auth, 'base64').toString().split(':');
+
+  if (login === ADMIN_USER && password === ADMIN_PASS) {
+    return next(); // Contraseña correcta, dejar pasar
+  }
+
+  res.set('WWW-Authenticate', 'Basic realm="Arandu ProTrade"');
+  res.status(401).send('Acceso denegado. Protegido por Arandu Cloud.');
+});
+// -----------------------------------------
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
