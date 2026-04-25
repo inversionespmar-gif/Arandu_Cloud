@@ -1,0 +1,16 @@
+{
+  "name": "arandu-cloud-server",
+  "version": "1.0.0",
+  "description": "Servidor en la Nube: Arandu Dashboard + Bot a Supabase",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "@mathieuc/tradingview": "^3.5.2",
+    "express": "^4.18.2",
+    "socket.io": "^4.7.4",
+    "dotenv": "^16.4.5"
+  }
+}

@@ -1,0 +1,336 @@
+:root {
+    --bg-color: #0b0e11;
+    --sidebar-bg: #161a1e;
+    --card-bg: #1e2329;
+    --primary: #f0b90b;
+    --primary-hover: #e2ae09;
+    --text: #eaecef;
+    --text-muted: #707a8a;
+    --up: #0ecb81;
+    --down: #f6465d;
+    --accent: rgba(240, 185, 11, 0.1);
+    --border: rgba(255, 255, 255, 0.08);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Outfit', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text);
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+header {
+    height: 70px;
+    background: var(--sidebar-bg);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    justify-content: space-between;
+    z-index: 100;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.logo h1 {
+    font-size: 20px;
+    letter-spacing: -0.5px;
+}
+
+.logo h1 span { color: var(--primary); }
+
+.controls-group {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.market-selector {
+    display: flex;
+    background: var(--bg-color);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.market-selector input {
+    background: transparent;
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    width: 180px;
+    font-family: inherit;
+    outline: none;
+}
+
+.market-selector select {
+    background: #2b3139;
+    border: none;
+    color: white;
+    padding: 0 8px;
+    font-family: inherit;
+    outline: none;
+    cursor: pointer;
+}
+
+.market-selector button {
+    background: var(--primary);
+    border: none;
+    color: black;
+    padding: 8px 16px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.indicator-tools {
+    display: flex;
+    gap: 10px;
+}
+
+.tool-btn {
+    background: #2b3139;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.tool-btn:hover {
+    background: #363c44;
+    border-color: var(--primary);
+}
+
+.status {
+    font-size: 13px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.status.connected {
+    background: rgba(14, 203, 129, 0.1);
+    color: var(--up);
+}
+
+.status.connected::before {
+    background: var(--up);
+    box-shadow: 0 0 8px var(--up);
+}
+
+main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.sidebar {
+    width: 250px;
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border);
+    padding: 20px 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    overflow-y: auto;
+    background-color: var(--bg-color);
+}
+
+.card {
+    background: var(--card-bg);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 12px 16px;
+    background: rgba(255,255,255,0.02);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-header h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+}
+
+.active-list {
+    padding: 10px;
+}
+
+.active-item {
+    padding: 10px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 4px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.active-item.selected {
+    border-left: 3px solid var(--primary);
+}
+
+.item-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.item-info small { color: var(--text-muted); }
+
+.price-mini {
+    font-weight: 700;
+    color: var(--up);
+}
+
+.top-stats {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: var(--card-bg);
+    padding: 15px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.stat-card.accent {
+    border-left: 4px solid var(--primary);
+}
+
+.label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.value {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.value.small { font-size: 18px; }
+
+.logs-area {
+    font-family: monospace;
+    font-size: 10px;
+    color: #4aedc4;
+    height: 100px;
+    overflow-y: auto;
+    background: #000;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.chart-section {
+    flex: 1;
+}
+
+.chart-container {
+    height: 520px;
+    width: 100%;
+}
+
+footer {
+    height: 30px;
+    background: var(--sidebar-bg);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.modal {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: flex; justify-content: center; align-items: center;
+    z-index: 2000;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    width: 450px;
+    border-radius: 12px;
+    padding: 25px;
+}
+
+.modal-content.large { width: 800px; }
+
+.hidden { display: none; }
+
+.code-editor {
+    width: 100%;
+    height: 350px;
+    background: #000;
+    color: #4aedc4;
+    font-family: monospace;
+    padding: 15px;
+    border-radius: 4px;
+    margin-top: 15px;
+    font-size: 12px;
+}
+
+.primary-btn {
+    width: 100%; padding: 12px; background: var(--primary);
+    border: none; border-radius: 4px; font-weight: 700; cursor: pointer;
+    margin-top: 15px;
+}
+
+.result-item {
+    padding: 12px; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; cursor: pointer;
+}
+
+.result-item:hover { background: rgba(255,255,255,0.05); }
