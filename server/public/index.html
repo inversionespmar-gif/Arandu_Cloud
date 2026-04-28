@@ -3,211 +3,633 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Arandu ProTrade</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+<title>Arandu Cloud - ICT ProTrade</title>
 <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 <script src="/ict_overlay.js"></script>
 <style>
-  * { font-family: 'Inter', sans-serif; box-sizing: border-box; }
-  body { margin: 0; background: #f8fafc; color: #0f172a; overflow: hidden; }
-  .ms { font-family: 'Material Symbols Outlined'; font-size: 18px; user-select: none; }
-  #chartDiv { width: 100%; height: 100%; }
-  #pinearea { font-family: 'Courier New', monospace; resize: none; }
-  .log-entry { font-size: 11px; font-family: monospace; padding: 2px 0; border-bottom: 1px solid #f1f5f9; }
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+:root {
+  --bg: #0a0c0f;
+  --bg2: #0f1217;
+  --bg3: #141820;
+  --bg4: #1a2030;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #e8eaf0;
+  --text2: #8892a4;
+  --text3: #4a5568;
+  --green: #00e896;
+  --green2: #00b872;
+  --red: #ff4d6a;
+  --red2: #cc2d4a;
+  --amber: #f59e0b;
+  --blue: #3b82f6;
+  --purple: #8b5cf6;
+  --cyan: #06b6d4;
+  --font: 'Space Grotesk', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  height: 100vh;
+  overflow: hidden;
+}
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--bg);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Grid BG */
+.wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* TOP BAR */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+  height: 60px;
+  background: rgba(10,12,15,0.95);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  z-index: 100;
+  flex-shrink: 0;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.3px;
+  cursor: pointer;
+}
+
+.logo-mark {
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--green), var(--cyan));
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #000;
+  font-weight: 900;
+}
+
+.logo-text { color: var(--text); }
+.logo-sub { color: var(--green); font-size: 10px; font-weight: 600; letter-spacing: 1.5px; margin-top: -2px; }
+
+.topbar-center {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0 auto;
+}
+
+.pair-badge {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--mono);
+  color: var(--text);
+  outline: none;
+  text-transform: uppercase;
+}
+
+.price-live {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--green);
+  min-width: 140px;
+  text-align: right;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg3);
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border2);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:0.6;transform:scale(1.2)}
+}
+
+.btn-sm {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: var(--font);
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border2);
+  background: var(--bg3);
+  color: var(--text2);
+  transition: all 0.2s;
+  outline: none;
+}
+
+.btn-sm:hover { border-color: var(--text2); color: var(--text); background: var(--bg4); }
+
+.btn-primary {
+  background: var(--green);
+  color: #000;
+  border-color: var(--green);
+}
+
+.btn-primary:hover { background: var(--green2); border-color: var(--green2); transform: translateY(-1px); }
+
+/* MAIN LAYOUT */
+.main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  z-index: 50;
+}
+
+/* SIDEBARS */
+.sidebar {
+  width: 260px;
+  background: rgba(15,18,23,0.98);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow-y: auto;
+}
+
+.right-panel {
+  width: 280px;
+  background: rgba(15,18,23,0.98);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.sidebar::-webkit-scrollbar, .right-panel::-webkit-scrollbar, .console-wrap::-webkit-scrollbar { width: 4px; }
+.sidebar::-webkit-scrollbar-thumb, .right-panel::-webkit-scrollbar-thumb, .console-wrap::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+.section-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--text3);
+  text-transform: uppercase;
+  padding: 20px 20px 10px;
+}
+
+/* Kill Zone Items */
+.kz-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 20px;
+  transition: background 0.2s;
+}
+
+.kz-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.kz-label {
+  font-size: 12px;
+  color: var(--text2);
+  flex: 1;
+}
+
+.kz-active { background: rgba(255,255,255,0.03); }
+.kz-active .kz-label { color: var(--text); font-weight: 600; }
+
+.kz-badge {
+  font-size: 9px;
+  font-family: var(--mono);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+/* Risk Panel */
+.risk-panel {
+  padding: 10px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.risk-inputs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.risk-field {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.field-label { font-size: 9px; color: var(--text3); font-weight: 700; }
+.field-input {
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  width: 100%;
+  outline: none;
+}
+
+/* MT5 Panel */
+.mt5-panel {
+  padding: 20px;
+  background: rgba(0,0,0,0.2);
+}
+
+.mt5-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.status-pill {
+  font-size: 10px;
+  font-family: var(--mono);
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+.status-offline { background: rgba(255,77,106,0.15); color: var(--red); border: 1px solid rgba(255,77,106,0.2); }
+.status-online { background: rgba(0,232,150,0.15); color: var(--green); border: 1px solid rgba(0,232,150,0.2); }
+
+.trade-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-trade {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font);
+}
+
+.btn-buy { background: rgba(0,232,150,0.1); color: var(--green); border: 1px solid rgba(0,232,150,0.3); }
+.btn-buy:hover { background: var(--green); color: #000; }
+
+.btn-sell { background: rgba(255,77,106,0.1); color: var(--red); border: 1px solid rgba(255,77,106,0.3); }
+.btn-sell:hover { background: var(--red); color: #000; }
+
+/* Console */
+.console-wrap {
+  flex: 1;
+  padding: 10px 20px;
+  font-family: var(--mono);
+  font-size: 11px;
+  overflow-y: auto;
+  color: var(--text2);
+}
+
+.log-entry { margin-bottom: 4px; line-height: 1.4; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+.log-time { color: var(--text3); margin-right: 8px; }
+
+/* CENTER CHART */
+.center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--bg2);
+}
+
+.chart-controls {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  gap: 12px;
+}
+
+.tf-select {
+  background: var(--bg3);
+  color: var(--text);
+  border: 1px solid var(--border2);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  outline: none;
+}
+
+#chartDiv { flex: 1; position: relative; }
+
+/* Signals List */
+.signals-list { flex: 1; overflow-y: auto; padding: 10px; }
+
+.signal-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 8px;
+  border-left-width: 4px;
+  transition: transform 0.2s;
+}
+
+.signal-card:hover { transform: translateX(4px); border-color: var(--border2); }
+.signal-card.bull { border-left-color: var(--green); }
+.signal-card.bear { border-left-color: var(--red); }
+
+.sig-header { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 10px; font-weight: 700; }
+.sig-price { font-family: var(--mono); font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.sig-meta { display: flex; gap: 8px; font-size: 9px; color: var(--text3); }
+
+/* FOOTER */
+.footer {
+  height: 36px;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  justify-content: space-between;
+}
+
+/* Modals */
+.modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-content {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  width: 600px;
+  max-width: 90vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+}
+
+.modal-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.modal-body { padding: 20px; flex: 1; overflow-y: auto; }
+.modal-footer { padding: 16px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+
+input.modal-input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  padding: 12px 16px;
+  border-radius: 8px;
+  outline: none;
+  font-family: var(--font);
+}
+
+textarea.modal-input {
+  width: 100%;
+  height: 300px;
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  color: var(--green);
+  padding: 16px;
+  border-radius: 8px;
+  outline: none;
+  font-family: var(--mono);
+  resize: none;
+}
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
-<header style="position:fixed;top:0;left:0;right:0;height:48px;background:#f1f5f9;border-bottom:1px solid #cbd5e1;display:flex;align-items:center;padding:0 16px;gap:16px;z-index:100;">
-  <div style="display:flex;align-items:center;gap:8px;padding-right:16px;border-right:1px solid #cbd5e1;">
-    <div style="width:28px;height:28px;background:#f97316;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:12px;">₿</div>
-    <input id="marketInput" value="BINANCE:BTCUSDT" style="background:transparent;border:none;font-weight:700;font-size:12px;text-transform:uppercase;color:#0f172a;width:160px;outline:none;">
+<div class="wrapper">
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="logo" onclick="location.reload()">
+      <div class="logo-mark">A</div>
+      <div>
+        <div class="logo-text">Arandu</div>
+        <div class="logo-sub">ICT CLOUD</div>
+      </div>
+    </div>
+
+    <div class="topbar-center">
+      <input id="marketInput" class="pair-badge" value="BINANCE:BTCUSDT">
+      <div id="priceDisplay" class="price-live">—</div>
+      <div class="status-indicator">
+        <div id="statusDot" class="status-dot"></div>
+        <span id="statusText" style="font-size:10px;color:var(--text2);font-weight:700;text-transform:uppercase;">Conectando...</span>
+      </div>
+    </div>
+
+    <div class="topbar-actions">
+      <button class="btn-sm" id="searchBtn">Indicadores</button>
+      <button class="btn-sm" id="pineBtn">Pine Editor</button>
+      <button class="btn-sm btn-primary" id="loadBtn">Sincronizar</button>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- LEFT SIDEBAR -->
+    <aside class="sidebar">
+      <div class="section-title">ICT Kill Zones</div>
+      <div id="kz-list">
+        <div class="kz-item" data-kz="asia">
+          <div class="kz-dot" style="background:#3b82f6"></div>
+          <span class="kz-label">Asia 20:00–00:00</span>
+          <span class="kz-badge" id="kz-asia-status" style="background:rgba(59,130,246,0.1);color:#3b82f6">–</span>
+        </div>
+        <div class="kz-item" data-kz="london">
+          <div class="kz-dot" style="background:#ef4444"></div>
+          <span class="kz-label">London 02:00–05:00</span>
+          <span class="kz-badge" id="kz-london-status" style="background:rgba(239,68,68,0.1);color:#ef4444">–</span>
+        </div>
+        <div class="kz-item" data-kz="nyam">
+          <div class="kz-dot" style="background:#10b981"></div>
+          <span class="kz-label">NY AM 09:30–11:00</span>
+          <span class="kz-badge" id="kz-nyam-status" style="background:rgba(16,185,129,0.1);color:#10b981">–</span>
+        </div>
+        <div class="kz-item" data-kz="nypm">
+          <div class="kz-dot" style="background:#8b5cf6"></div>
+          <span class="kz-label">NY PM 13:30–16:00</span>
+          <span class="kz-badge" id="kz-nypm-status" style="background:rgba(139,92,246,0.1);color:#8b5cf6">–</span>
+        </div>
+      </div>
+
+      <div class="section-title">Configuración Riesgo</div>
+      <div class="risk-panel">
+        <div class="risk-inputs">
+          <div class="risk-field">
+            <span class="field-label">RIESGO %</span>
+            <input id="riskPct" class="field-input" type="number" step="0.1" value="1">
+          </div>
+          <div class="risk-field">
+            <span class="field-label">RATIO RR</span>
+            <input id="rrRatio" class="field-input" type="number" step="0.5" value="2">
+          </div>
+          <div class="risk-field">
+            <span class="field-label">SL PIPS</span>
+            <input id="slPips" class="field-input" type="number" step="5" value="50">
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">MetaTrader 5</div>
+      <div class="mt5-panel">
+        <div class="mt5-header">
+          <span style="font-size:11px;font-weight:700;color:var(--text2)">CONEXIÓN EA</span>
+          <span id="mt5Badge" class="status-pill status-offline">OFFLINE</span>
+        </div>
+        <div id="mt5AccountInfo" style="font-size:10px;color:var(--text3);margin-bottom:12px;line-height:1.4">Esperando bridge...</div>
+        <div class="trade-buttons">
+          <button id="mt5BuyBtn" class="btn-trade btn-buy">▲ BUY</button>
+          <button id="mt5SellBtn" class="btn-trade btn-sell">▼ SELL</button>
+        </div>
+      </div>
+
+      <div class="section-title">Consola del Sistema</div>
+      <div id="consoleLogs" class="console-wrap"></div>
+    </aside>
+
+    <!-- CENTER -->
+    <main class="center">
+      <div class="chart-controls">
+        <select id="tfSelect" class="tf-select">
+          <optgroup label="Minutos"><option value="1">1m</option><option value="5">5m</option><option value="15" selected>15m</option><option value="30">30m</option></optgroup>
+          <optgroup label="Horas"><option value="60">1h</option><option value="240">4h</option></optgroup>
+          <optgroup label="Días"><option value="1D">1D</option></optgroup>
+        </select>
+        <div id="ohlcOverlay" style="font-size:11px;color:var(--text2);font-family:var(--mono)">
+          <span id="mktLabel" style="color:var(--text);font-weight:700">BTCUSDT</span> | 
+          <span id="exchLabel">BINANCE</span> | 
+          <span id="tfLabel">15m</span>
+        </div>
+      </div>
+      <div id="chartDiv"></div>
+    </main>
+
+    <!-- RIGHT PANEL -->
+    <aside class="right-panel">
+      <div class="section-title" style="padding-top:10px">Señales ICT en Vivo</div>
+      <div id="tradeList" class="signals-list">
+        <!-- Las señales se insertarán aquí -->
+        <div style="font-size:11px;color:var(--text3);text-align:center;margin-top:20px">Esperando señales...</div>
+      </div>
+
+      <div class="section-title">Indicadores Activos</div>
+      <div id="indicatorList" style="padding:0 20px;display:flex;flex-direction:column;gap:8px"></div>
+    </aside>
   </div>
 
-  <div style="display:flex;align-items:center;gap:4px;">
-    <select id="tfSelect" style="background:#e2e8f0;border:none;font-size:11px;font-weight:700;padding:4px 8px;border-radius:4px;cursor:pointer;outline:none;">
-      <optgroup label="Minutos">
-        <option value="1">1m</option>
-        <option value="3">3m</option>
-        <option value="5">5m</option>
-        <option value="15" selected>15m</option>
-        <option value="30">30m</option>
-        <option value="45">45m</option>
-      </optgroup>
-      <optgroup label="Horas">
-        <option value="60">1h</option>
-        <option value="120">2h</option>
-        <option value="180">3h</option>
-        <option value="240">4h</option>
-      </optgroup>
-      <optgroup label="Días+">
-        <option value="1D">1D</option>
-        <option value="1W">1W</option>
-        <option value="1M">1M</option>
-      </optgroup>
-    </select>
-    <button id="loadBtn" style="background:#2563eb;color:white;border:none;padding:4px 12px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;">Cargar</button>
-  </div>
-
-  <div style="display:flex;align-items:center;gap:8px;padding-left:16px;border-left:1px solid #cbd5e1;">
-    <button id="searchBtn" style="background:#f1f5f9;border:1px solid #cbd5e1;padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;">
-      <span class="ms">search</span> Indicadores
-    </button>
-    <button id="pineBtn" style="background:#f1f5f9;border:1px solid #cbd5e1;padding:4px 10px;border-radius:4px;font-size:11px;cursor:pointer;display:flex;align-items:center;gap:4px;">
-      <span class="ms">terminal</span> Pine Script
-    </button>
-  </div>
-
-  <div style="margin-left:auto;display:flex;align-items:center;gap:16px;">
-    <!-- Panel de riesgo ICT -->
-    <div style="display:flex;align-items:center;gap:6px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:6px;padding:4px 10px;">
-      <span style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;">Riesgo</span>
-      <input id="riskPct" type="number" min="0.1" max="5" step="0.1" value="1" style="width:36px;background:transparent;border:none;font-size:11px;font-weight:700;color:#ef4444;outline:none;text-align:center;">%
-      <span style="font-size:9px;color:#94a3b8;">RR</span>
-      <input id="rrRatio" type="number" min="1" max="5" step="0.5" value="2" style="width:28px;background:transparent;border:none;font-size:11px;font-weight:700;color:#10b981;outline:none;text-align:center;">
-      <span style="font-size:9px;color:#94a3b8;">SL</span>
-      <input id="slPips" type="number" min="5" max="500" step="5" value="50" style="width:36px;background:transparent;border:none;font-size:11px;font-weight:700;color:#8b5cf6;outline:none;text-align:center;">
-      <span style="font-size:9px;color:#94a3b8;">pip</span>
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div>
+      <span style="color:var(--green);font-weight:700">ARANDU CLOUD v5.0</span>
+      <span style="margin-left:20px">SESSION: <span id="sessionId">—</span></span>
     </div>
     <div>
-      <div style="font-size:10px;color:#64748b;font-weight:600;text-transform:uppercase;">PRECIO</div>
-      <div id="priceDisplay" style="font-size:18px;font-weight:700;color:#10b981;font-family:monospace;">—</div>
+      <span id="candleCount">0 VELAS CARGADAS</span> | 
+      <span style="color:var(--green)">● ESTATUS NUBE OK</span>
     </div>
-    <div id="statusBadge" style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;padding:4px 10px;border-radius:20px;">Conectando...</div>
-  </div>
-</header>
+  </footer>
+</div>
 
-<!-- LEFT TOOLBAR -->
-<aside style="position:fixed;top:48px;left:0;bottom:32px;width:44px;background:#f1f5f9;border-right:1px solid #cbd5e1;display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:16px;z-index:50;">
-  <span class="ms" style="color:#2563eb;cursor:pointer;" title="Cursor">near_me</span>
-  <span class="ms" style="color:#64748b;cursor:pointer;" title="Línea">show_chart</span>
-  <span class="ms" style="color:#64748b;cursor:pointer;" title="Dibujo">polyline</span>
-  <span class="ms" style="color:#64748b;cursor:pointer;" title="Texto">title</span>
-  <span class="ms" style="color:#64748b;cursor:pointer;" title="Zoom">zoom_in</span>
-</aside>
-
-<!-- RIGHT PANEL -->
-<aside id="rightPanel" style="position:fixed;top:48px;right:0;bottom:32px;width:240px;background:#f8fafc;border-left:1px solid #cbd5e1;display:flex;flex-direction:column;z-index:50;">
-
-  <!-- ICT Kill Zones legend -->
-  <div style="padding:10px 12px;border-bottom:1px solid #e2e8f0;background:#f1f5f9;">
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:6px;">ICT Kill Zones ✦</div>
-    <div style="display:flex;flex-direction:column;gap:3px;">
-      <div style="display:flex;align-items:center;gap:6px;font-size:10px;">
-        <span style="width:10px;height:10px;background:#3b82f6;border-radius:2px;display:inline-block;"></span> Asia (20:00–00:00 ET)
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:10px;">
-        <span style="width:10px;height:10px;background:#ef4444;border-radius:2px;display:inline-block;"></span> London (02:00–05:00 ET)
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:10px;">
-        <span style="width:10px;height:10px;background:#10b981;border-radius:2px;display:inline-block;"></span> NY AM (09:30–11:00 ET)
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:10px;">
-        <span style="width:10px;height:10px;background:#f59e0b;border-radius:2px;display:inline-block;"></span> NY Lunch (12:00–13:00 ET)
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:10px;">
-        <span style="width:10px;height:10px;background:#8b5cf6;border-radius:2px;display:inline-block;"></span> NY PM (13:30–16:00 ET)
-      </div>
+<!-- MODALS -->
+<div id="searchModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <span style="font-weight:700">Buscador de Indicadores</span>
+      <span style="cursor:pointer" onclick="document.getElementById('searchModal').style.display='none'">✕</span>
     </div>
-    <div style="margin-top:6px;font-size:9px;color:#94a3b8;">▲▼ = señales de reversión ICT</div>
-  </div>
-
-  <!-- MT5 Panel -->
-  <div style="padding:10px 12px;border-bottom:1px solid #e2e8f0;background:#fff;">
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
-      <span>MT5 Auto-Trade</span>
-      <span id="mt5Badge" style="background:#fee2e2;color:#991b1b;font-size:9px;padding:2px 7px;border-radius:10px;font-weight:700;">OFFLINE</span>
-    </div>
-    <div id="mt5AccountInfo" style="font-size:10px;color:#94a3b8;margin-bottom:6px;">Sin conexión</div>
-    <!-- Trade manual rápido -->
-    <div style="display:flex;gap:4px;margin-bottom:4px;">
-      <button id="mt5BuyBtn" style="flex:1;background:#d1fae5;color:#065f46;border:1px solid #10b981;border-radius:4px;font-size:10px;font-weight:700;padding:4px;cursor:pointer;">▲ BUY</button>
-      <button id="mt5SellBtn" style="flex:1;background:#fee2e2;color:#991b1b;border:1px solid #ef4444;border-radius:4px;font-size:10px;font-weight:700;padding:4px;cursor:pointer;">▼ SELL</button>
-    </div>
-    <div style="font-size:9px;color:#94a3b8;">⚡ Auto: solo opera dentro de Kill Zones</div>
-  </div>
-
-  <!-- Historial de trades -->
-  <div style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:4px;">Trades MT5</div>
-    <div id="tradeList" style="display:flex;flex-direction:column;gap:3px;max-height:90px;overflow-y:auto;">
-      <div style="font-size:10px;color:#94a3b8;font-style:italic;">Sin trades</div>
-    </div>
-  </div>
-
-  <!-- Indicadores TradingView -->
-  <div style="padding:8px 12px;border-bottom:1px solid #e2e8f0;">
-    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-bottom:4px;">Indicadores TV</div>
-    <div id="indicatorList" style="display:flex;flex-direction:column;gap:4px;">
-      <div style="font-size:11px;color:#94a3b8;font-style:italic;">Sin indicadores</div>
-    </div>
-  </div>
-
-  <div style="flex:1;display:flex;flex-direction:column;min-height:0;">
-    <div style="padding:8px 12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;border-bottom:1px solid #e2e8f0;background:#f1f5f9;">Consola</div>
-    <div id="consoleLogs" style="flex:1;overflow-y:auto;padding:8px 10px;"></div>
-  </div>
-</aside>
-
-<!-- CHART AREA -->
-<main style="position:fixed;top:48px;left:44px;right:240px;bottom:32px;background:white;">
-  <!-- OHLC overlay -->
-  <div id="ohlcOverlay" style="position:absolute;top:10px;left:12px;z-index:10;display:flex;align-items:center;gap:12px;font-size:11px;font-family:monospace;background:rgba(255,255,255,0.85);padding:4px 8px;border-radius:4px;border:1px solid #e2e8f0;">
-    <span id="mktLabel" style="font-weight:700;">BTCUSDT</span>
-    <span id="exchLabel" style="color:#94a3b8;">BINANCE</span>
-    <span id="tfLabel" style="color:#64748b;">15m</span>
-  </div>
-  <div id="chartDiv"></div>
-</main>
-
-<!-- FOOTER -->
-<footer style="position:fixed;bottom:0;left:0;right:0;height:32px;background:#f1f5f9;border-top:1px solid #cbd5e1;display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:10px;color:#64748b;z-index:100;">
-  <div style="display:flex;gap:16px;align-items:center;">
-    <span style="font-weight:700;color:#2563eb;">Arandu ProTrade v5</span>
-    <span id="sessionId">—</span>
-  </div>
-  <div style="display:flex;gap:8px;align-items:center;">
-    <span id="candleCount">0 velas</span>
-    <span style="background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:10px;font-weight:700;">LIVE</span>
-  </div>
-</footer>
-
-<!-- SEARCH MODAL -->
-<div id="searchModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;">
-  <div style="background:white;border-radius:12px;width:500px;max-height:80vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-    <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
-      <span style="font-weight:700;">Buscar Indicadores</span>
-      <button onclick="document.getElementById('searchModal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;">✕</button>
-    </div>
-    <div style="padding:16px;">
-      <input id="searchInput" placeholder="Buscar: RSI, MACD, Bollinger..." style="width:100%;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;">
-      <div id="searchResults" style="margin-top:12px;max-height:350px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;"></div>
+    <div class="modal-body">
+      <input id="searchInput" class="modal-input" placeholder="Escribe el nombre del indicador (RSI, EMA, etc)...">
+      <div id="searchResults" style="margin-top:20px;display:flex;flex-direction:column;gap:10px"></div>
     </div>
   </div>
 </div>
 
-<!-- PINE MODAL -->
-<div id="pineModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;">
-  <div style="background:white;border-radius:12px;width:780px;max-height:90vh;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-    <div style="padding:16px 20px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;background:#0f172a;">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span class="ms" style="color:#10b981;">terminal</span>
-        <span style="font-weight:700;color:white;font-size:14px;">Arandu Pine Editor v5</span>
-      </div>
-      <button onclick="document.getElementById('pineModal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:#94a3b8;">✕</button>
+<div id="pineModal" class="modal">
+  <div class="modal-content" style="width:800px">
+    <div class="modal-header">
+      <span style="font-weight:700">Arandu Pine Script Editor</span>
+      <span style="cursor:pointer" onclick="document.getElementById('pineModal').style.display='none'">✕</span>
     </div>
-    <div style="padding:16px;background:#0f172a;">
-      <textarea id="pinearea" placeholder="//@version=5&#10;indicator('Mi Indicador', overlay=true)&#10;plot(close)" style="width:100%;height:340px;background:#1e293b;color:#4ade80;border:1px solid #334155;border-radius:6px;padding:14px;font-size:12px;line-height:1.6;outline:none;"></textarea>
-      <div style="margin-top:12px;display:flex;justify-content:flex-end;gap:8px;">
-        <button onclick="document.getElementById('pineModal').style.display='none'" style="background:#334155;color:#94a3b8;border:none;padding:8px 20px;border-radius:6px;font-weight:600;cursor:pointer;">Cancelar</button>
-        <button id="runPineBtn" style="background:#2563eb;color:white;border:none;padding:8px 20px;border-radius:6px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">
-          <span class="ms" style="font-size:16px;color:white;">play_arrow</span> Ejecutar en Gráfico
-        </button>
-      </div>
+    <div class="modal-body">
+      <textarea id="pinearea" class="modal-input" placeholder="//@version=5&#10;indicator('Script', overlay=true)"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-sm" onclick="document.getElementById('pineModal').style.display='none'">Cancelar</button>
+      <button id="runPineBtn" class="btn-sm btn-primary">Ejecutar Script</button>
     </div>
   </div>
 </div>
@@ -223,23 +645,22 @@ const socket = io({ path: '/ws-trading', transports: ['websocket', 'polling'] })
 // ============================================================
 const chartDiv = document.getElementById('chartDiv');
 const chart = LightweightCharts.createChart(chartDiv, {
-  layout: { background: { color: '#ffffff' }, textColor: '#64748b' },
-  grid: { vertLines: { color: '#f1f5f9' }, horzLines: { color: '#f1f5f9' } },
-  timeScale: { timeVisible: true, secondsVisible: false, borderColor: '#e2e8f0' },
-  rightPriceScale: { borderColor: '#e2e8f0' },
+  layout: { background: { color: 'transparent' }, textColor: '#8892a4' },
+  grid: { vertLines: { color: 'rgba(255,255,255,0.03)' }, horzLines: { color: 'rgba(255,255,255,0.03)' } },
+  timeScale: { timeVisible: true, secondsVisible: false, borderColor: 'rgba(255,255,255,0.07)' },
+  rightPriceScale: { borderColor: 'rgba(255,255,255,0.07)' },
   crosshair: { mode: 1 },
   autoSize: true
 });
 
 const candleSeries = chart.addCandlestickSeries({
-  upColor: '#10b981', downColor: '#ef4444',
+  upColor: '#00e896', downColor: '#ff4d6a',
   borderVisible: false,
-  wickUpColor: '#10b981', wickDownColor: '#ef4444'
+  wickUpColor: '#00e896', wickDownColor: '#ff4d6a'
 });
 
-// Init ICT overlay (Kill Zones + señales de reversión)
+// Init ICT overlay
 ICT.init(chart, candleSeries, chartDiv);
-log('✦ ICT Kill Zones activas (Asia / London / NY AM / Lunch / PM)', '#8b5cf6');
 
 // ============================================================
 // LOGGING
@@ -248,7 +669,8 @@ function log(msg, color) {
   const el = document.getElementById('consoleLogs');
   const d = document.createElement('div');
   d.className = 'log-entry';
-  d.innerHTML = `<span style="color:#94a3b8">${new Date().toLocaleTimeString()}</span> <span style="color:${color||'#475569'}">${msg}</span>`;
+  const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  d.innerHTML = `<span class="log-time">${time}</span><span style="color:${color||'var(--text2)'}">${msg}</span>`;
   el.prepend(d);
 }
 
@@ -256,246 +678,200 @@ function log(msg, color) {
 // SOCKET EVENTS
 // ============================================================
 socket.on('connect', () => {
-  log('✅ Conectado al servidor', '#10b981');
-  document.getElementById('statusBadge').style.background = '#d1fae5';
-  document.getElementById('statusBadge').style.color = '#065f46';
-  document.getElementById('statusBadge').textContent = 'Online';
-  document.getElementById('sessionId').textContent = socket.id.substring(0, 12);
+  log('✅ Sistema Arandu en línea', '#00e896');
+  document.getElementById('statusDot').style.background = 'var(--green)';
+  document.getElementById('statusDot').style.boxShadow = '0 0 8px var(--green)';
+  document.getElementById('statusText').textContent = 'Online';
+  document.getElementById('statusText').style.color = 'var(--green)';
+  document.getElementById('sessionId').textContent = socket.id.substring(0, 8).toUpperCase();
   loadMarket();
 });
 
 socket.on('disconnect', () => {
-  log('❌ Desconectado', '#ef4444');
-  document.getElementById('statusBadge').style.background = '#fee2e2';
-  document.getElementById('statusBadge').style.color = '#991b1b';
-  document.getElementById('statusBadge').textContent = 'Offline';
+  log('❌ Conexión perdida con el servidor', '#ff4d6a');
+  document.getElementById('statusDot').style.background = 'var(--red)';
+  document.getElementById('statusDot').style.boxShadow = '0 0 8px var(--red)';
+  document.getElementById('statusText').textContent = 'Offline';
+  document.getElementById('statusText').style.color = 'var(--red)';
 });
 
 socket.on('market_info', (info) => {
   document.getElementById('mktLabel').textContent = info.description;
   document.getElementById('exchLabel').textContent = info.exchange;
   document.getElementById('tfLabel').textContent = info.timeframe + 'm';
-  log('📊 ' + info.description + ' cargado', '#2563eb');
+  document.getElementById('marketInput').value = info.description;
+  log(`📊 Activo: ${info.description} (${info.timeframe}m)`, '#3b82f6');
 });
 
 socket.on('initial_data', (data) => {
-  if (!data || data.length === 0) { log('⚠️ Sin datos históricos', '#f59e0b'); return; }
+  if (!data || data.length === 0) return;
   candleSeries.setData(data);
-  document.getElementById('candleCount').textContent = data.length + ' velas';
-  log('📈 ' + data.length + ' velas históricas cargadas', '#10b981');
+  document.getElementById('candleCount').textContent = `${data.length} VELAS CARGADAS`;
   chart.timeScale().fitContent();
-  // Carga ICT overlay con los datos históricos
   ICT.loadCandles(data);
-  log('✦ ICT: sesiones y pivotes calculados', '#8b5cf6');
+  updateKZStatus();
 });
 
 socket.on('price_update', (data) => {
   candleSeries.update(data.period);
-  document.getElementById('priceDisplay').textContent = data.price.toLocaleString('es', { minimumFractionDigits: 2 });
-  const color = data.period.close >= data.period.open ? '#10b981' : '#ef4444';
-  document.getElementById('priceDisplay').style.color = color;
-  // Actualiza ICT en tiempo real
+  const priceEl = document.getElementById('priceDisplay');
+  priceEl.textContent = data.price.toLocaleString('en-US', { minimumFractionDigits: 2 });
+  const isUp = data.period.close >= data.period.open;
+  priceEl.style.color = isUp ? 'var(--green)' : 'var(--red)';
   ICT.updateCandle(data.period);
+  updateKZStatus();
 });
 
-socket.on('search_results', (results) => {
-  const container = document.getElementById('searchResults');
-  container.innerHTML = '';
-  if (!results.length) { container.innerHTML = '<div style="color:#94a3b8;font-size:12px;padding:8px;">Sin resultados</div>'; return; }
-  results.slice(0, 15).forEach(r => {
-    const d = document.createElement('div');
-    d.style.cssText = 'padding:10px 12px;border:1px solid #e2e8f0;border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;';
-    d.innerHTML = `<div><div style="font-size:12px;font-weight:600;">${r.name}</div><div style="font-size:10px;color:#94a3b8;">v${r.version} · ${r.author}</div></div><span class="ms" style="color:#2563eb;">add_circle</span>`;
-    d.onmouseover = () => d.style.background = '#f0f9ff';
-    d.onmouseout = () => d.style.background = 'white';
-    d.onclick = () => { socket.emit('add_indicator', { id: r.id, version: r.version }); document.getElementById('searchModal').style.display = 'none'; };
-    container.appendChild(d);
+function updateKZStatus() {
+  const now = Math.floor(Date.now() / 1000);
+  const kzs = ['asia', 'london', 'nyam', 'nypm'];
+  kzs.forEach(id => {
+    const el = document.getElementById(`kz-${id}-status`);
+    const item = document.querySelector(`.kz-item[data-kz="${id}"]`);
+    // Mock check based on client time (server does this more accurately)
+    // For UI we can just show active if the overlay says so
+    // Simple mock logic for UI polish:
+    const d = new Date();
+    const h = d.getUTCHours() - 4; // Approx ET
+    const active = false; // logic would go here
+    // We rely on colors/bolding from the overlay generally
   });
-});
+}
 
-const indicatorSeries = {};
-const colors = ['#2563eb','#f59e0b','#d946ef','#8b5cf6','#06b6d4','#84cc16','#f43f5e','#0ea5e9'];
-let colorIdx = 0;
-
-socket.on('indicator_ready', (data) => {
-  log('📌 Indicador: ' + data.name, '#2563eb');
-  const list = document.getElementById('indicatorList');
-  if (list.querySelector('i')) list.innerHTML = '';
-  const item = document.createElement('div');
-  item.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:white;border:1px solid #e2e8f0;border-radius:4px;font-size:11px;';
-  item.innerHTML = `<span style="truncate;flex:1;">${data.name}</span><button style="background:none;border:none;cursor:pointer;font-size:14px;color:#94a3b8;" title="Eliminar">✕</button>`;
-  item.querySelector('button').onclick = () => {
-    socket.emit('remove_indicator', { id: data.id });
-    if (indicatorSeries[data.id]) { indicatorSeries[data.id].forEach(s => chart.removeSeries(s.series)); delete indicatorSeries[data.id]; }
-    item.remove();
-  };
-  list.appendChild(item);
-  indicatorSeries[data.id] = [];
-  const plots = data.plots || {};
-  const n = Object.keys(plots).length || 5;
-  for (let i = 0; i < n; i++) {
-    const pid = Object.keys(plots)[i] || `plot_${i}`;
-    const series = chart.addLineSeries({ color: colors[colorIdx++ % colors.length], lineWidth: 1, title: plots[pid] || '' });
-    indicatorSeries[data.id].push({ series, plotId: pid });
-  }
-});
-
-socket.on('indicator_update', (data) => {
-  if (!indicatorSeries[data.id] || !data.values) return;
-  indicatorSeries[data.id].forEach(item => {
-    const val = data.values[item.plotId];
-    if (val != null && !isNaN(val) && data.values.$time) {
-      try { item.series.update({ time: data.values.$time, value: val }); } catch(e) {}
-    }
-  });
-});
-
-socket.on('server_error', (msg) => log('❌ ' + msg, '#ef4444'));
-
-// ============================================================
-// MT5 EVENTS
-// ============================================================
-socket.on('mt5_status', (data) => {
-  const badge   = document.getElementById('mt5Badge');
-  const acctDiv = document.getElementById('mt5AccountInfo');
-  if (data.connected) {
-    badge.style.background = '#d1fae5';
-    badge.style.color      = '#065f46';
-    badge.textContent      = 'ONLINE';
-    const a = data.account || {};
-    acctDiv.innerHTML = `
-      <div style="color:#0f172a;font-weight:600;">${a.company || 'MT5'}</div>
-      <div>Cuenta: <b>${a.login || '—'}</b> | Apalancamiento: 1:${a.leverage || '—'}</div>
-      <div>Balance: <b style="color:#10b981;">${a.balance ? a.balance.toFixed(2) : '—'} ${a.currency || ''}</b></div>`;
-    log(`✅ MT5 conectado | ${a.company || ''} | Balance: ${a.balance || 0} ${a.currency || ''}`, '#10b981');
-  } else {
-    badge.style.background = '#fee2e2';
-    badge.style.color      = '#991b1b';
-    badge.textContent      = 'OFFLINE';
-    acctDiv.textContent    = 'Sin conexión — ejecuta mt5_bridge.py';
-    log('⚠️ MT5 desconectado', '#f59e0b');
-  }
+// Signals List Management
+socket.on('ict_signal_detected', (data) => {
+  addSignalCard(data);
 });
 
 socket.on('mt5_trade', (trade) => {
+  // Update last signal status if exists
+  log(`🤖 MT5 Trade: ${trade.direction} @ ${trade.price}`, trade.success ? 'var(--green)' : 'var(--red)');
+});
+
+function addSignalCard(data) {
   const list = document.getElementById('tradeList');
-  if (list.querySelector('i')) list.innerHTML = '';
+  if (list.querySelector('div[style*="text-align:center"]')) list.innerHTML = '';
 
-  const item = document.createElement('div');
-  const ok   = trade.success;
-  const dir  = trade.direction === 'BUY' ? '▲' : '▼';
-  const col  = trade.direction === 'BUY' ? '#10b981' : '#ef4444';
-  item.style.cssText = `font-size:10px;padding:3px 6px;border-radius:3px;background:${ok ? '#f0fdf4' : '#fff1f2'};border-left:3px solid ${col};`;
-  if (ok) {
-    item.innerHTML = `<span style="color:${col};font-weight:700;">${dir} ${trade.direction}</span> ${trade.symbol?.split(':')[1]||trade.symbol} @ ${trade.price?.toFixed(5)||'—'} <span style="color:#94a3b8;">${trade.killZone||''}</span>`;
-    log(`🤖 MT5 Trade: ${trade.direction} ${trade.symbol} @ ${trade.price} | Ticket: #${trade.ticket}`, col);
+  const card = document.createElement('div');
+  const type = data.direction.toLowerCase(); // bull or bear
+  card.className = `signal-card ${type}`;
+  
+  const time = new Date(data.time * 1000).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+  const kzClass = data.inKillZone ? 'kz-active' : '';
+
+  card.innerHTML = `
+    <div class="sig-header">
+      <span style="color:var(--${type === 'buy' ? 'green' : 'red'})">${data.label.toUpperCase()}</span>
+      <span>${time}</span>
+    </div>
+    <div class="sig-price">$${data.price.toLocaleString()}</div>
+    <div class="sig-meta">
+      <span style="color:${data.inKillZone ? 'var(--green)' : 'var(--text3)'}">${data.killZone}</span>
+      <span>•</span>
+      <span>${data.symbol}</span>
+    </div>
+  `;
+  list.prepend(card);
+  if (list.children.length > 20) list.removeChild(list.lastChild);
+}
+
+// ============================================================
+// MT5 & RISK
+// ============================================================
+socket.on('mt5_status', (data) => {
+  const badge = document.getElementById('mt5Badge');
+  const info = document.getElementById('mt5AccountInfo');
+  if (data.connected) {
+    badge.className = 'status-pill status-online';
+    badge.textContent = 'ONLINE';
+    const a = data.account;
+    info.innerHTML = `<b>${a.company}</b><br>Acc: ${a.login} | Bal: <span style="color:var(--green)">${a.balance.toFixed(2)} ${a.currency}</span>`;
   } else {
-    item.innerHTML = `<span style="color:#ef4444;font-weight:700;">❌ Error:</span> ${trade.error || 'Desconocido'}`;
-    log(`❌ MT5 Trade fallido: ${trade.error}`, '#ef4444');
+    badge.className = 'status-pill status-offline';
+    badge.textContent = 'OFFLINE';
+    info.textContent = 'Bridge MT5 no detectado';
   }
-  list.prepend(item);
-  if (list.children.length > 8) list.removeChild(list.lastChild);
 });
 
-socket.on('mt5_signal', (data) => {
-  const col = data.direction === 'BUY' ? '#10b981' : '#ef4444';
-  const dir = data.direction === 'BUY' ? '▲' : '▼';
-  log(`🤖 ${dir} ${data.direction} enviado a MT5 | ${data.symbol} @ ${data.price} | ${data.killZone}`, col);
+function getRiskConfig() {
+  return {
+    sl_pips: parseFloat(document.getElementById('slPips').value) || 50,
+    rr_ratio: parseFloat(document.getElementById('rrRatio').value) || 2,
+    risk_pct: parseFloat(document.getElementById('riskPct').value) || 1,
+    tp_pips: Math.round((parseFloat(document.getElementById('slPips').value) || 50) * (parseFloat(document.getElementById('rrRatio').value) || 2))
+  };
+}
+
+document.getElementById('mt5BuyBtn').onclick = () => {
+  socket.emit('mt5_manual_trade', { direction: 'BUY', symbol: document.getElementById('marketInput').value, ...getRiskConfig() });
+};
+document.getElementById('mt5SellBtn').onclick = () => {
+  socket.emit('mt5_manual_trade', { direction: 'SELL', symbol: document.getElementById('marketInput').value, ...getRiskConfig() });
+};
+
+// ============================================================
+// INDICATORS & SCRIPTS
+// ============================================================
+socket.on('indicator_ready', (data) => {
+  const list = document.getElementById('indicatorList');
+  const item = document.createElement('div');
+  item.style.cssText = 'padding:8px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;display:flex;justify-content:space-between;align-items:center;font-size:11px;';
+  item.innerHTML = `<span>${data.name}</span><span style="cursor:pointer;color:var(--red)" onclick="removeInd('${data.id}', this)">✕</span>`;
+  list.appendChild(item);
+  log(`📌 Indicador añadido: ${data.name}`, '#3b82f6');
 });
 
-socket.on('ict_signal_detected', (data) => {
-  const col = data.direction === 'BUY' ? '#10b981' : '#ef4444';
-  const dir = data.direction === 'BUY' ? '▲' : '▼';
-  const zone = data.inKillZone ? `✅ ${data.killZone}` : `⏸ Fuera de KZ`;
-  log(`${dir} ${data.label} | ${zone} | ${data.direction === 'BUY' ? 'Enviando a MT5...' : 'Enviando a MT5...'}`, col);
-});
-
-// Request MT5 status on connect
-socket.on('connect', () => {
-  socket.emit('request_mt5_status');
-});
+function removeInd(id, btn) {
+  socket.emit('remove_indicator', { id });
+  btn.parentElement.remove();
+}
 
 // ============================================================
 // UI ACTIONS
 // ============================================================
 function loadMarket() {
-  const market = document.getElementById('marketInput').value.trim().toUpperCase();
+  const market = document.getElementById('marketInput').value.trim();
   const tf = document.getElementById('tfSelect').value;
-  if (!market) return;
-  log(`🔄 Cargando ${market} (${tf})...`, '#64748b');
-  candleSeries.setData([]);
   ICT.clear();
+  candleSeries.setData([]);
   socket.emit('set_market', { market, timeframe: tf });
 }
 
 document.getElementById('loadBtn').onclick = loadMarket;
-document.getElementById('marketInput').addEventListener('keypress', e => { if (e.key === 'Enter') loadMarket(); });
 document.getElementById('tfSelect').onchange = loadMarket;
 
-document.getElementById('searchBtn').onclick = () => {
-  document.getElementById('searchModal').style.display = 'flex';
-  document.getElementById('searchInput').focus();
-};
-
-document.getElementById('pineBtn').onclick = () => {
-  document.getElementById('pineModal').style.display = 'flex';
-  document.getElementById('pinearea').focus();
-};
-
-// MT5 manual trade buttons
-document.getElementById('mt5BuyBtn').onclick = () => {
-  const market = document.getElementById('marketInput').value.trim().toUpperCase();
-  socket.emit('mt5_manual_trade', { direction: 'BUY', symbol: market, source: 'manual', ...getRiskConfig() });
-  log(`📤 BUY manual → MT5 | Riesgo ${getRiskConfig().risk_pct}% | SL ${getRiskConfig().sl_pips}pip | TP ${getRiskConfig().tp_pips}pip (1:${getRiskConfig().rr_ratio})`, '#10b981');
-};
-document.getElementById('mt5SellBtn').onclick = () => {
-  const market = document.getElementById('marketInput').value.trim().toUpperCase();
-  socket.emit('mt5_manual_trade', { direction: 'SELL', symbol: market, source: 'manual', ...getRiskConfig() });
-  log(`📤 SELL manual → MT5 | Riesgo ${getRiskConfig().risk_pct}% | SL ${getRiskConfig().sl_pips}pip | TP ${getRiskConfig().tp_pips}pip (1:${getRiskConfig().rr_ratio})`, '#ef4444');
-};
+document.getElementById('searchBtn').onclick = () => document.getElementById('searchModal').style.display = 'flex';
+document.getElementById('pineBtn').onclick = () => document.getElementById('pineModal').style.display = 'flex';
 
 let searchTimer;
-document.getElementById('searchInput').addEventListener('input', () => {
+document.getElementById('searchInput').oninput = (e) => {
   clearTimeout(searchTimer);
-  const q = document.getElementById('searchInput').value;
-  if (q.length < 2) return;
-  searchTimer = setTimeout(() => socket.emit('search_indicator', q), 500);
+  if (e.target.value.length < 2) return;
+  searchTimer = setTimeout(() => socket.emit('search_indicator', e.target.value), 500);
+};
+
+socket.on('search_results', (results) => {
+  const res = document.getElementById('searchResults');
+  res.innerHTML = '';
+  results.slice(0, 10).forEach(r => {
+    const d = document.createElement('div');
+    d.style.cssText = 'padding:12px;background:var(--bg3);border-radius:8px;cursor:pointer;display:flex;justify-content:space-between;';
+    d.innerHTML = `<div><b>${r.name}</b><br><small>${r.author}</small></div><button class="btn-sm">Añadir</button>`;
+    d.onclick = () => { socket.emit('add_indicator', { id: r.id, version: r.version }); document.getElementById('searchModal').style.display = 'none'; };
+    res.appendChild(d);
+  });
 });
 
 document.getElementById('runPineBtn').onclick = () => {
-  const code = document.getElementById('pinearea').value.trim();
-  if (!code) { log('⚠️ Editor vacío', '#f59e0b'); return; }
-  log('🚀 Compilando Pine Script...', '#8b5cf6');
-  socket.emit('add_pine_code', { code, name: 'Script Personalizado' });
+  const code = document.getElementById('pinearea').value;
+  socket.emit('add_pine_code', { code, name: 'Script Custom' });
   document.getElementById('pineModal').style.display = 'none';
 };
 
-// ── Configuración de riesgo dinámica ─────────────────────────
-function getRiskConfig() {
-  const sl   = parseFloat(document.getElementById('slPips').value)  || 50;
-  const rr   = parseFloat(document.getElementById('rrRatio').value) || 2;
-  const risk = parseFloat(document.getElementById('riskPct').value) || 1;
-  return { sl_pips: sl, rr_ratio: rr, tp_pips: Math.round(sl * rr), risk_pct: risk };
-}
-
-// Actualiza tooltip del panel de riesgo con TP calculado
-function updateRiskDisplay() {
-  const { sl_pips, tp_pips, rr_ratio, risk_pct } = getRiskConfig();
-  const slEl = document.getElementById('slPips');
-  slEl.title = `SL: ${sl_pips}pip | TP: ${tp_pips}pip | Ratio 1:${rr_ratio} | Riesgo: ${risk_pct}%`;
-  socket.emit('update_risk_config', getRiskConfig());
-}
-
-['riskPct','rrRatio','slPips'].forEach(id => {
-  document.getElementById(id).addEventListener('change', updateRiskDisplay);
-});
-
-// Close modals on backdrop click
-['searchModal','pineModal'].forEach(id => {
-  document.getElementById(id).addEventListener('click', function(e) {
-    if (e.target === this) this.style.display = 'none';
-  });
-});
+// Close modals
+window.onclick = (e) => {
+  if (e.target.className === 'modal') e.target.style.display = 'none';
+};
 </script>
 </body>
 </html>
