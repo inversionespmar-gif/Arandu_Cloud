@@ -699,7 +699,7 @@ socket.on('market_info', (info) => {
   document.getElementById('mktLabel').textContent = info.description;
   document.getElementById('exchLabel').textContent = info.exchange;
   document.getElementById('tfLabel').textContent = info.timeframe + 'm';
-  document.getElementById('marketInput').value = info.description;
+  // No sobrescribimos marketInput.value para mantener el símbolo original (ej. BINANCE:BTCUSDT)
   log(`📊 Activo: ${info.description} (${info.timeframe}m)`, '#3b82f6');
 });
 
